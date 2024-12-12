@@ -1,0 +1,47 @@
+﻿@page "/project"
+@using MauiApp1.Modles
+@using Microsoft.EntityFrameworkCore
+@inject FinalProjectDbContext DbContext
+
+<div style="padding: 20px; max-width: 1000px; margin: auto;">
+	<h2>Project Management</h2>
+	@if (!string.IsNullOrEmpty(connectionStatus)) // If the connection status is not null then display the connection status
+	{
+		<p style="color: @(connectionStatus.Contains("Error") ? "red" : "green");">@connectionStatus</p>
+	}
+</div>
+
+@code {
+	private List<MauiApp1.Modles.Project>? projects; // Create a list of projects
+	private List<MauiApp1.Modles.Employee>? employees; // Create a list of employees
+	private List<MauiApp1.Modles.ProjectEmployee>? projectEmployees; // Create a list of project employees
+	private string? connectionStatus; // For diplaying connection Status and errors
+	private MauiApp1.Modles.Project newProject = new MauiApp1.Modles.Project(); // Create a new project object
+	private MauiApp1.Modles.Employee newEmployee = new MauiApp1.Modles.Employee(); // Create a new employee object
+	private MauiApp1.Modles.ProjectEmployee newProjectEmployee = new MauiApp1.Modles.ProjectEmployee(); // Create a new project employee object
+
+	protected override async Task OnInitializedAsync() // When the page is initialized
+	{
+		try
+		{
+			projects = await DbContext.Project.ToListAsync(); // Get all the projects from the database
+			employees = await DbContext.Employee.ToListAsync(); // Get all the employees from the database
+			projectEmployees = await DbContext.ProjectEmployee.ToListAsync(); // Get all the project employees from the database
+			if (projects != null && employees != null && projectEmployees != null) // If all the data is loaded
+			{
+				connectionStatus = "Database connection successful"; // Set the connection status to successful
+				Console.WriteLine("Database connection successful"); // Write to the console that the connection is successful")
+			}
+			else
+			{
+				connectionStatus = "Database connection failed"; // If the data is not loaded set the connection status to failed
+				Console.WriteLine("Database connection failed"); // Write to the console that the connection failed")
+			}
+		}
+		catch (Exception ex)
+		{
+			connectionStatus = $"Error: {ex.Message}"; // If there is an error set the connection status to the error message
+			Console.WriteLine($"Error: {ex.Message}"); // Write to the console the error message")
+		}
+	}
+}

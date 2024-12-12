@@ -1,0 +1,433 @@
+﻿@page "/employee"
+@using MauiApp1.Modles
+@using Microsoft.EntityFrameworkCore
+@inject FinalProjectDbContext DbContext
+
+<div style="padding: 20px; max-width: 1000px; margin: auto;">
+    <h2>Employee Management</h2>
+
+    <h3>Database Connection Check</h3>
+    @if (!string.IsNullOrEmpty(connectionStatus)) // If the connection status is not null then display the connection status
+    {
+        <p style="color: @(connectionStatus.Contains("Error") ? "red" : "green");">@connectionStatus</p>
+    }
+
+    <h3>Employee List</h3>
+    @if (employees != null && employees.Any())
+    {
+        <div style=" height: 200px; border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f9f9f9;" class="overflow-auto">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                    <tr style="background-color: #f4f4f4; text-align: left;">
+                        <th style="border: 1px solid #ddd; padding: 8px;">ID</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">First</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Last</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Email</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Phone</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Address</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Hired</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Role ID</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Salary</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var employee in employees) // Loop through the employees and display them in a table
+                    {
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@employee.EmployeeID</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@employee.FirstName</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@employee.LastName</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@employee.Email</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@employee.Phone</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@employee.Address</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@employee.Hired?.ToString("yyyy-MM-dd")</td> <!-- Formatted so that is doesn't look ugly' -->
+                            <td style="border: 1px solid #ddd; padding: 8px;">@employee.RoleID</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@employee.Salary</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">
+                                <button @onclick="() => EmployeeToUpdate(employee)" style="padding: 5px 10px; background-color: #007bff; 
+                                    color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                    Update
+                                </button> 
+                                <button @onclick="() => DeleteEmployee(employee)" style="padding: 5px 10px; background-color: #007bff;
+                                    color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    }
+    else if (employees != null && !employees.Any())
+    {
+        <p>No Employees found in the database.</p>
+    }
+    else
+    {
+        <p>Loading Employees...</p>
+    }
+
+    <button type="button" @onclick="DisplayEmployeeTable" style="padding: 10px 20px; background-color: #007bff; color:
+            white; border: none; border-radius: 5px; cursor: pointer; visibility: @addButtonVisibility">
+        Add Employee
+    </button>
+
+    <div style="position: relative; padding: 20px; max-width: 1000px; margin:auto">
+        @if (showAddEmployeeForm) // If the add employee form is true then display the form
+        {
+            <div>
+                <h3>Add a New Employee</h3>
+                <form @onsubmit="AddEmployee" style="border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f9f9f9;">
+                    <div style="margin-bottom: 10px;">
+                        <label>Employee ID:</label>
+                        <input type="number" @bind="newEmployee.EmployeeID" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>First Name:</label>
+                        <input type="text" @bind="newEmployee.FirstName" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Last Name:</label>
+                        <input type="text" @bind="newEmployee.LastName" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Email:</label>
+                        <input type="email" @bind="newEmployee.Email" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Phone:</label>
+                        <input type="text" @bind="newEmployee.Phone" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Address:</label>
+                        <input type="text" @bind="newEmployee.Address" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Hired Date:</label>
+                        <input type="date" @bind="newEmployee.Hired" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Role ID:</label>
+                        <input type="number" @bind="newEmployee.RoleID" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Salary:</label>
+                        <input type="number" @bind="newEmployee.Salary" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <button type="submit" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Add Employee
+                    </button>
+                </form>
+            </div>
+        }
+        @if (showUpdateEmployeeForm) // If the update employee form is true then display the form
+        {
+            <div>
+                <h3>Update Current Employee</h3>
+                <form @onsubmit="UpdateEmployee" style="border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f9f9f9;">
+                    <div style="margin-bottom: 10px;">
+                        <label>Employee ID:</label>
+                        <input type="number" @bind="newEmployee.EmployeeID" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>First Name:</label>
+                        <input type="text" @bind="newEmployee.FirstName" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Last Name:</label>
+                        <input type="text" @bind="newEmployee.LastName" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Email:</label>
+                        <input type="email" @bind="newEmployee.Email" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Phone:</label>
+                        <input type="text" @bind="newEmployee.Phone" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Address:</label>
+                        <input type="text" @bind="newEmployee.Address" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Hired Date:</label>
+                        <input type="date" @bind="newEmployee.Hired" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Role ID:</label>
+                        <input type="number" @bind="newEmployee.RoleID" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label>Salary:</label>
+                        <input type="number" @bind="newEmployee.Salary" required style="width: 100%; padding: 8px; margin-top: 5px;" />
+                    </div>
+
+                    <button type="submit" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Update Employee
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
+</div>
+
+
+@code {
+    private List<MauiApp1.Modles.Employee>? employees; // Creates a list for displaying database
+    private MauiApp1.Modles.Employee newEmployee = new MauiApp1.Modles.Employee(); // Holds the data for the new employee
+    private string? connectionStatus; // to display connection status string to user and and errors caught
+    private string? addButtonVisibility = "visible"; // Visibility of the add button
+    private bool showAddEmployeeForm = false; // Boolean to show the add employee form
+    private bool showUpdateEmployeeForm = false; // Boolean to show the update employee form
+    private int? originalID = null; // original id variable to updating employee
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            employees = await DbContext.Employee.ToListAsync();
+            if (employees != null)
+            {
+                connectionStatus = "Connected successfully. Database connected.";
+                Console.WriteLine("Database connection successful.");
+            }
+        }
+        catch (Exception ex)
+        {
+            connectionStatus = $"Error connecting to the database: {ex.Message}";
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private async Task ReloadEmployees() // Method to reload the list so that is always shows updated information
+    {
+        // Exception checking
+        try
+        {
+            employees = await DbContext.Employee.ToListAsync();
+            StateHasChanged(); // Tells Blazor to reload things
+        }
+        catch (Exception ex)
+        {
+            // ConnectionStatus updated
+            connectionStatus = $"Error reloading employees: {ex.Message}";
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+
+    private void DisplayEmployeeTable()
+    {
+        try
+        {
+            if (showAddEmployeeForm == false)
+            {
+                showAddEmployeeForm = true;
+                showUpdateEmployeeForm = false;
+            }
+            else
+            {
+                showAddEmployeeForm = false;
+            }            
+        }
+        catch (Exception e)
+        {
+            connectionStatus = $"Error! Could not load Add Employee Table: {e.Message}";
+            Console.WriteLine($"Error! Could not load Add Employee Table: {e.Message}");
+        }
+    }
+
+    private async Task AddEmployee()
+    {
+        try
+        {
+            if (newEmployee != null && // Make sure the new employee is not null in any field
+            newEmployee.EmployeeID > 0 &&
+            !string.IsNullOrWhiteSpace(newEmployee.FirstName) &&
+            !string.IsNullOrWhiteSpace(newEmployee.LastName) &&
+            !string.IsNullOrWhiteSpace(newEmployee.Email) &&
+            !string.IsNullOrWhiteSpace(newEmployee.Phone) &&
+            !string.IsNullOrWhiteSpace(newEmployee.Address) &&
+            newEmployee.Hired != null &&
+            newEmployee.RoleID > 0 &&
+            newEmployee.Salary > 0)
+            {
+                // Check if the employeeID already exists
+                if (employees != null && employees.Any(e => e.EmployeeID == newEmployee.EmployeeID)) 
+                {
+                    connectionStatus = "Error: Employee ID already exists.";
+                    return;
+                }
+
+                // Add the new employee to the database
+                DbContext.Employee.Add(newEmployee);
+                await DbContext.SaveChangesAsync();
+
+                // Add the new employee to the list
+                employees?.Add(newEmployee);
+
+                // Reset the form
+                newEmployee = new MauiApp1.Modles.Employee();
+
+                // Set the connection status
+                connectionStatus = "Employee added successfully.";
+                Console.WriteLine("Employee added successfully.");
+
+                // Reload components
+                ReloadEmployees();
+            }
+            else
+            {
+                // Set the connection status
+                connectionStatus = "Error: Please enter valid data.";
+                Console.WriteLine("Error: Please enter valid data.");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Set the connection status
+            connectionStatus = $"Error adding employee: {ex.Message}";
+            Console.WriteLine($"Error adding employee: {ex.Message}");
+        }
+    }
+
+    private void EmployeeToUpdate(MauiApp1.Modles.Employee employee) // Method to populate Update Employee for
+    {
+		originalID = employee.EmployeeID; // Set the original id to the employee id so that it can't be changed
+
+		newEmployee = new MauiApp1.Modles.Employee() // Create a new employee object with the same attributes as the selected employee
+            {
+                EmployeeID = employee.EmployeeID,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                Email = employee.Email,
+                Phone = employee.Phone,
+                Address = employee.Address,
+                Hired = employee.Hired,
+                RoleID = employee.RoleID,
+                Salary = employee.Salary
+            };
+
+
+        showUpdateEmployeeForm = true; // Display the update employee form
+        showAddEmployeeForm = false; // Hide the add employee form if it is visible
+    }
+
+    private async Task UpdateEmployee()
+    {
+        try
+        {
+            if (newEmployee != null && // Make sure the new employee is not null in any field
+            newEmployee.EmployeeID > 0 &&
+            !string.IsNullOrWhiteSpace(newEmployee.FirstName) &&
+            !string.IsNullOrWhiteSpace(newEmployee.LastName) &&
+            !string.IsNullOrWhiteSpace(newEmployee.Email) &&
+            !string.IsNullOrWhiteSpace(newEmployee.Phone) &&
+            !string.IsNullOrWhiteSpace(newEmployee.Address) &&
+            newEmployee.Hired != null &&
+            newEmployee.RoleID > 0 &&
+            newEmployee.Salary > 0)
+            {
+                // finding the employee in Db
+                var Uemployee = await DbContext.Employee.FirstOrDefaultAsync(e => e.EmployeeID == originalID.Value);
+
+				if (Uemployee == null) // If the employee is not found
+				{
+					connectionStatus = "Error: Employee with that ID not found";
+				}
+
+                // if Uemployee ID found then we will update the employee's attributes
+                // Uemployee.EmployeeID = newEmployee.EmployeeID; --> we dont want to change id, we want id to remain the same
+                Uemployee.FirstName = newEmployee.FirstName;
+                Uemployee.LastName = newEmployee.LastName;
+                Uemployee.Email = newEmployee.Email;
+                Uemployee.Phone = newEmployee.Phone;
+                Uemployee.Address = newEmployee.Address;
+                Uemployee.Hired = newEmployee.Hired;
+                Uemployee.RoleID = newEmployee.RoleID;
+                Uemployee.Salary = newEmployee.Salary;
+
+                // Updating the employee in the database
+                await DbContext.SaveChangesAsync();
+
+                // Reset the form
+                newEmployee = new MauiApp1.Modles.Employee();
+                originalID = null; // reseting original ID
+
+                // Set the connection status
+                connectionStatus = "Employee updated successfully.";
+                Console.WriteLine("Employee updated successfully.");
+
+                showUpdateEmployeeForm = false; // Hides the form
+
+                // Reload components
+                ReloadEmployees();
+            }
+        }
+        catch (Exception ex) // Exception Catching
+        {
+            // Set the connection status
+            connectionStatus = $"Error updating employee: {ex.Message}";
+            Console.WriteLine($"Error updating employee: {ex.Message}");
+        }
+    }
+
+
+    private async Task DeleteEmployee(MauiApp1.Modles.Employee employee) // Method to delete the employee
+    {
+        try // Exception catching
+        {
+            // finding the employee in Db
+            var Demployee = await DbContext.Employee.FirstOrDefaultAsync(e => e.EmployeeID == employee.EmployeeID);
+            if (Demployee == null)
+            {
+                connectionStatus = "Error: Employee with that ID not found";
+            }
+
+            // Deleting the employee in the database
+            DbContext.Employee.Remove(Demployee);
+            await DbContext.SaveChangesAsync();
+
+            // Reset the form
+            newEmployee = new MauiApp1.Modles.Employee();
+
+            originalID = null; // reseting original ID
+
+            // Set the connection status
+            connectionStatus = "Employee deleted successfully.";
+            Console.WriteLine("Employee deleted successfully.");
+
+            // Making the form hidden
+            showUpdateEmployeeForm = false;
+
+            // Reloads components
+            ReloadEmployees();
+        }
+		catch (Exception ex) // Catching exception here :)
+		{
+			// Set the connection status
+			connectionStatus = $"Error deleting employee: {ex.Message}";
+			Console.WriteLine($"Error deleting employee: {ex.Message}");
+		}
+    }
+}

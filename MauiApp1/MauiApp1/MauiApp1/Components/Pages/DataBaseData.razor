@@ -1,0 +1,150 @@
+﻿@page "/databasedata"
+@using MauiApp1.Modles
+@using Microsoft.EntityFrameworkCore
+@inject FinalProjectDbContext DbContext
+
+<div style="padding: 20px; max-width: 1000px; margin: auto;">
+    <h2>Database Data</h2>
+
+    <h3>Database Connection Check</h3>
+    @if (!string.IsNullOrEmpty(connectionStatus))
+    {
+        <p style="color: @(connectionStatus.Contains("Error") ? "red" : "green");">@connectionStatus</p>
+    }
+
+    <h3>Department Data</h3>
+    @if (departments != null && departments.Any())
+    {
+        <div style="height: 200px; border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f9f9f9;" class="overflow-auto">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                    <tr style="background-color: #f4f4f4; text-align: left;">
+                        <th style="border: 1px solid #ddd; padding: 8px;">Department ID</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Department Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var department in departments)
+                    {
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@department.DepartmentID</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@department.DepartmentName</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else if (departments != null && !departments.Any())
+    {
+        <p>No Departments found in the database.</p>
+    }
+    else
+    {
+        <p>Loading Department...</p>
+    }
+
+    <br />
+    <h3>Role List</h3>
+    @if (roles != null && roles.Any())
+    {
+        <div style="height: 200px; border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f9f9f9;" class="overflow-auto">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                    <tr style="background-color: #f4f4f4; text-align: left;">
+                        <th style="border: 1px solid #ddd; padding: 8px;">Role ID</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Role Name</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">Description</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">Department ID</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var role in roles)
+                    {
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@role.RoleID</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@role.RoleName</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@role.Description</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@role.DepartmentID</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else if (departments != null && !departments.Any())
+    {
+        <p>No Roles found in the database.</p>
+    }
+    else
+    {
+        <p>Loading Roles...</p>
+    }
+
+    <br />
+    <h3>Project Data</h3>
+    @if (projects != null && projects.Any())
+    {
+        <div style="height: 200px; border: 1px solid #ddd; padding: 20px; border-radius: 5px; background-color: #f9f9f9;" class="overflow-auto">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                    <tr style="background-color: #f4f4f4; text-align: left;">
+                        <th style="border: 1px solid #ddd; padding: 8px;">Project ID</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Project Name</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Project Manager ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var project in projects)
+                    {
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@project.ProjectID</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">@project.ProjectName</td>
+                            <td style="border; 1px solid #ddd; padding: 8px;">@project.ProjectManagerID</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else if (projects != null && !projects.Any())
+    {
+        <p>No Projects found in the database.</p>
+    }
+    else
+    {
+        <p>Loading Projects...</p>
+    }
+
+
+</div>
+
+@code {
+    private List<MauiApp1.Modles.Department>? departments;
+    private List<MauiApp1.Modles.Role>? roles;
+    private List<MauiApp1.Modles.Project>? projects;
+    private MauiApp1.Modles.Department newDepartment = new MauiApp1.Modles.Department();
+    private MauiApp1.Modles.Role newRole = new MauiApp1.Modles.Role();
+    private MauiApp1.Modles.Project newProject = new MauiApp1.Modles.Project();
+    private string? connectionStatus;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            roles = await DbContext.Role.ToListAsync();
+            departments = await DbContext.Department.ToListAsync();
+            projects = await DbContext.Project.ToListAsync();
+            if (roles != null && projects != null && departments != null)
+            {
+                connectionStatus = "Connected successfully. Database connected.";
+                Console.WriteLine("Database connection successful.");
+            }
+        }
+        catch (Exception ex)
+        {
+            connectionStatus = $"Error connecting to the database: {ex.Message}";
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+}
