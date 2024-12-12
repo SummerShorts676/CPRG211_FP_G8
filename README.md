@@ -12,3 +12,7 @@ Enjoy!
 
 *** The data need to be imported into the database before adding employee since roleID is a primary key
 	I will try to upload 123456 DB  !!!
+
+*** I used this video to import/export the database, you may have to watch to see how to import
+	https://www.youtube.com/watch?v=h_0wihZ_ABs
+	https://www.youtube.com/watch?v=h_0wihZ_ABs
